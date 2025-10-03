@@ -8,8 +8,8 @@ import { AuthProvider } from "@/components/auth-provider"
 import { Suspense } from "react"
 
 export const metadata: Metadata = {
-  title: "Invoice Management Platform",
-  description: "Professional invoice management system for hardware companies",
+  title: "Huruma Hardware Company - Invoice Management",
+  description: "Professional invoice management system for Huruma Hardware Company",
   generator: "v0.app",
 }
 

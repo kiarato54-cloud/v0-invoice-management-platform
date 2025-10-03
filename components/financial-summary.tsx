@@ -53,7 +53,7 @@ export function FinancialSummary() {
   const summaryCards = [
     {
       title: "Total Revenue",
-      value: `$${financialData.totalRevenue.toLocaleString()}`,
+      value: `Tshs ${financialData.totalRevenue.toLocaleString()}`,
       subtitle: `${financialData.totalInvoices} total invoices`,
       trend: null,
     },
@@ -66,24 +66,24 @@ export function FinancialSummary() {
     {
       title: "Monthly Growth",
       value: `${financialData.monthlyGrowth >= 0 ? "+" : ""}${financialData.monthlyGrowth.toFixed(1)}%`,
-      subtitle: `$${financialData.currentMonthRevenue.toLocaleString()} this month`,
+      subtitle: `Tshs ${financialData.currentMonthRevenue.toLocaleString()} this month`,
       trend: financialData.monthlyGrowth >= 0 ? "up" : "down",
     },
     {
       title: "Average Invoice",
-      value: `$${financialData.averageInvoiceValue.toLocaleString()}`,
+      value: `Tshs ${financialData.averageInvoiceValue.toLocaleString()}`,
       subtitle: "Per invoice value",
       trend: null,
     },
     {
       title: "Outstanding",
-      value: `$${financialData.pendingRevenue.toLocaleString()}`,
+      value: `Tshs ${financialData.pendingRevenue.toLocaleString()}`,
       subtitle: "Pending payments",
       trend: null,
     },
     {
       title: "Overdue",
-      value: `$${financialData.overdueRevenue.toLocaleString()}`,
+      value: `Tshs ${financialData.overdueRevenue.toLocaleString()}`,
       subtitle: "Requires attention",
       trend: null,
     },

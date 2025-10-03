@@ -1,3 +1,5 @@
+import { createClient } from "./supabase/client"
+
 export interface User {
   id: string
   email: string
@@ -12,62 +14,132 @@ export interface AuthState {
   isAuthenticated: boolean
 }
 
-// Mock users for demonstration
-const mockUsers: User[] = [
-  {
-    id: "1",
-    email: "admin@hardwarecompany.com",
-    name: "System Administrator",
-    role: "admin",
-    createdAt: "2024-01-01",
-    isActive: true,
-  },
-  {
-    id: "2",
-    email: "director@hardwarecompany.com",
-    name: "Managing Director",
-    role: "managing_director",
-    createdAt: "2024-01-01",
-    isActive: true,
-  },
-  {
-    id: "3",
-    email: "sales@hardwarecompany.com",
-    name: "Sales Officer",
-    role: "sales_officer",
-    createdAt: "2024-01-01",
-    isActive: true,
-  },
-  {
-    id: "4",
-    email: "store@hardwarecompany.com",
-    name: "Store Keeper",
-    role: "storekeeper",
-    createdAt: "2024-01-01",
-    isActive: true,
-  },
-]
-
 export const login = async (email: string, password: string): Promise<User | null> => {
-  // Simulate API call
+  const supabase = createClient()
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+
+  if (error || !data.user) {
+    console.error("[v0] Login error:", error?.message || "Unknown error")
+    return null
+  }
+
+  // Fetch user profile from users table
+  const { data: userData, error: userError } = await supabase.from("users").select("*").eq("id", data.user.id).single()
+
+  if (userError || !userData) {
+    console.error("[v0] User data fetch error:", userError?.message || "Unknown error")
+    return null
+  }
+
+  const user: User = {
+    id: userData.id,
+    email: userData.email,
+    name: userData.name || userData.full_name || userData.email,
+    role: userData.role,
+    createdAt: userData.created_at,
+    isActive: userData.is_active ?? true, // Use nullish coalescing for safety
+  }
+
+  return user
+}
+
+export const signup = async (
+  email: string,
+  password: string,
+  name: string,
+  role: "sales_officer" | "storekeeper",
+): Promise<{ user: User | null; error: string | null }> => {
+  const supabase = createClient()
+
+  // Sign up the user with Supabase Auth - the trigger will create the profile automatically
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+      data: {
+        name,
+        role,
+      },
+    },
+  })
+
+  if (error) {
+    console.error("[v0] Signup error:", error.message)
+    return { user: null, error: error.message }
+  }
+
+  if (!data.user) {
+    return { user: null, error: "Signup failed - no user returned" }
+  }
+
+  // Wait a moment for the trigger to create the profile
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
-  const user = mockUsers.find((u) => u.email === email && u.isActive)
-  if (user && password === "password123") {
-    localStorage.setItem("currentUser", JSON.stringify(user))
-    return user
+  // Fetch the created user profile
+  const { data: userData, error: fetchError } = await supabase.from("users").select("*").eq("id", data.user.id).single()
+
+  if (fetchError || !userData) {
+    console.error("[v0] User profile fetch error:", fetchError?.message)
+    // User was created in auth but profile fetch failed - they can still login
+    return {
+      user: {
+        id: data.user.id,
+        email: email,
+        name: name,
+        role: role,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+      },
+      error: null,
+    }
   }
-  return null
+
+  const user: User = {
+    id: userData.id,
+    email: userData.email,
+    name: userData.name || userData.full_name || email,
+    role: userData.role,
+    createdAt: userData.created_at,
+    isActive: userData.is_active ?? true,
+  }
+
+  return { user, error: null }
 }
 
-export const logout = () => {
-  localStorage.removeItem("currentUser")
+export const logout = async () => {
+  const supabase = createClient()
+  await supabase.auth.signOut()
 }
 
-export const getCurrentUser = (): User | null => {
-  if (typeof window === "undefined") return null
-  const stored = localStorage.getItem("currentUser")
-  return stored ? JSON.parse(stored) : null
+export const getCurrentUser = async (): Promise<User | null> => {
+  const supabase = createClient()
+
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser()
+
+  if (!authUser) return null
+
+  const { data: userData, error } = await supabase.from("users").select("*").eq("id", authUser.id).single()
+
+  if (error || !userData) {
+    console.error("[v0] Get current user error:", error?.message)
+    return null
+  }
+
+  return {
+    id: userData.id,
+    email: userData.email,
+    name: userData.name || userData.full_name || userData.email,
+    role: userData.role,
+    createdAt: userData.created_at,
+    isActive: userData.is_active ?? true, // Use nullish coalescing for safety
+  }
 }
 
 export const hasPermission = (user: User | null, permission: string): boolean => {

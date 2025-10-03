@@ -1,3 +1,5 @@
+import { createClient } from "./supabase/client"
+
 export interface Customer {
   id: string
   name: string
@@ -7,6 +9,7 @@ export interface Customer {
   city: string
   state: string
   zipCode: string
+  paymentMethod?: string
 }
 
 export interface InvoiceItem {
@@ -32,86 +35,163 @@ export interface Invoice {
   createdAt: string
   dueDate: string
   notes?: string
+  storeKeeperName?: string
+  salesOfficerName?: string
+  driverName?: string
+  vehiclePlateNumber?: string
 }
 
-// Mock data
-export const mockCustomers: Customer[] = [
-  {
-    id: "1",
-    name: "ABC Construction Ltd",
-    email: "contact@abcconstruction.com",
-    phone: "+1-555-0123",
-    address: "123 Builder Street",
-    city: "Construction City",
-    state: "CA",
-    zipCode: "90210",
-  },
-  {
-    id: "2",
-    name: "XYZ Hardware Store",
-    email: "orders@xyzhardware.com",
-    phone: "+1-555-0456",
-    address: "456 Hardware Ave",
-    city: "Tool Town",
-    state: "TX",
-    zipCode: "75001",
-  },
-]
+export const getInvoices = async (): Promise<Invoice[]> => {
+  const supabase = createClient()
 
-export const mockInvoices: Invoice[] = [
-  {
-    id: "1",
-    invoiceNumber: "INV-2024-001",
-    customerId: "1",
-    customer: mockCustomers[0],
-    items: [
-      {
-        id: "1",
-        name: "Steel Bolts",
-        description: "M12 x 50mm Steel Bolts",
-        quantity: 100,
-        unitPrice: 2.5,
-        total: 250.0,
-      },
-      {
-        id: "2",
-        name: "Washers",
-        description: "M12 Steel Washers",
-        quantity: 100,
-        unitPrice: 0.25,
-        total: 25.0,
-      },
-    ],
-    subtotal: 275.0,
-    tax: 27.5,
-    total: 302.5,
-    status: "sent",
-    createdBy: "3",
-    createdAt: "2024-01-15",
-    dueDate: "2024-02-15",
-    notes: "Net 30 payment terms",
-  },
-]
+  const { data, error } = await supabase
+    .from("invoices")
+    .select(`
+      *,
+      customer:customers(*),
+      items:invoice_items(*)
+    `)
+    .order("created_at", { ascending: false })
 
-export const getInvoices = (): Invoice[] => {
-  const stored = localStorage.getItem("invoices")
-  return stored ? JSON.parse(stored) : mockInvoices
-}
-
-export const saveInvoice = (invoice: Invoice): void => {
-  const invoices = getInvoices()
-  const existingIndex = invoices.findIndex((inv) => inv.id === invoice.id)
-
-  if (existingIndex >= 0) {
-    invoices[existingIndex] = invoice
-  } else {
-    invoices.push(invoice)
+  if (error) {
+    console.error("[v0] Error fetching invoices:", error)
+    return []
   }
 
-  localStorage.setItem("invoices", JSON.stringify(invoices))
+  return data.map((inv: any) => ({
+    id: inv.id,
+    invoiceNumber: inv.invoice_number,
+    customerId: inv.customer_id,
+    customer: {
+      id: inv.customer.id,
+      name: inv.customer.name,
+      email: inv.customer.email,
+      phone: inv.customer.phone,
+      address: inv.customer.address,
+      city: inv.customer.city,
+      state: inv.customer.state,
+      zipCode: inv.customer.zip_code,
+      paymentMethod: inv.customer.payment_method,
+    },
+    items: inv.items.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unit_price,
+      total: item.total,
+    })),
+    subtotal: inv.subtotal,
+    tax: inv.tax,
+    total: inv.total,
+    status: inv.status,
+    createdBy: inv.user_id,
+    createdAt: inv.created_at,
+    dueDate: inv.due_date,
+    notes: inv.notes,
+    storeKeeperName: inv.storekeeper_name,
+    salesOfficerName: inv.sales_officer_name,
+    driverName: inv.driver_name,
+    vehiclePlateNumber: inv.vehicle_plate_number,
+  }))
 }
 
-export const getCustomers = (): Customer[] => {
-  const stored = localStorage.getItem("customers")
-  return stored ? JSON.parse(stored) : mockCustomers
+export const saveInvoice = async (invoice: Invoice): Promise<void> => {
+  const supabase = createClient()
+
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("User not authenticated")
+
+  // Insert or update invoice
+  const { data: invoiceData, error: invoiceError } = await supabase
+    .from("invoices")
+    .upsert({
+      id: invoice.id,
+      invoice_number: invoice.invoiceNumber,
+      customer_id: invoice.customerId,
+      user_id: user.id,
+      subtotal: invoice.subtotal,
+      tax: invoice.tax,
+      total: invoice.total,
+      status: invoice.status,
+      due_date: invoice.dueDate,
+      notes: invoice.notes,
+      storekeeper_name: invoice.storeKeeperName,
+      sales_officer_name: invoice.salesOfficerName,
+      driver_name: invoice.driverName,
+      vehicle_plate_number: invoice.vehiclePlateNumber,
+    })
+    .select()
+    .single()
+
+  if (invoiceError) {
+    console.error("[v0] Error saving invoice:", invoiceError)
+    throw invoiceError
+  }
+
+  // Delete existing items and insert new ones
+  await supabase.from("invoice_items").delete().eq("invoice_id", invoice.id)
+
+  const { error: itemsError } = await supabase.from("invoice_items").insert(
+    invoice.items.map((item) => ({
+      invoice_id: invoice.id,
+      name: item.name,
+      description: item.description,
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
+      total: item.total,
+    })),
+  )
+
+  if (itemsError) {
+    console.error("[v0] Error saving invoice items:", itemsError)
+    throw itemsError
+  }
+}
+
+export const getCustomers = async (): Promise<Customer[]> => {
+  const supabase = createClient()
+
+  const { data, error } = await supabase.from("customers").select("*").order("name", { ascending: true })
+
+  if (error) {
+    console.error("[v0] Error fetching customers:", error)
+    return []
+  }
+
+  return data.map((customer: any) => ({
+    id: customer.id,
+    name: customer.name,
+    email: customer.email,
+    phone: customer.phone,
+    address: customer.address,
+    city: customer.city,
+    state: customer.state,
+    zipCode: customer.zip_code,
+    paymentMethod: customer.payment_method,
+  }))
+}
+
+export const saveCustomer = async (customer: Customer): Promise<void> => {
+  const supabase = createClient()
+
+  const { error } = await supabase.from("customers").upsert({
+    id: customer.id,
+    name: customer.name,
+    email: customer.email,
+    phone: customer.phone,
+    address: customer.address,
+    city: customer.city,
+    state: customer.state,
+    zip_code: customer.zipCode,
+    payment_method: customer.paymentMethod,
+  })
+
+  if (error) {
+    console.error("[v0] Error saving customer:", error)
+    throw error
+  }
 }

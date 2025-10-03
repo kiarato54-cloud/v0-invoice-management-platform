@@ -124,3 +124,126 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Added comprehensive print styles for invoice printing */
+@media print {
+  /* Reset page margins */
+  @page {
+    margin: 0.5cm;
+    size: A4;
+  }
+
+  /* Hide everything except invoice content */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show invoice content */
+  .invoice-print-area,
+  .invoice-print-area * {
+    visibility: visible;
+  }
+
+  /* Position invoice properly */
+  .invoice-print-area {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    background: white !important;
+    color: black !important;
+    padding: 0.5cm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Force black text for all elements */
+  .invoice-print-area *,
+  .invoice-print-area h1,
+  .invoice-print-area h2,
+  .invoice-print-area h3,
+  .invoice-print-area p,
+  .invoice-print-area span,
+  .invoice-print-area td,
+  .invoice-print-area th {
+    background: white !important;
+    color: black !important;
+    border-color: black !important;
+  }
+
+  /* Ensure borders are visible */
+  .invoice-print-area .border-b,
+  .invoice-print-area .border-b-2 {
+    border-bottom: 1px solid black !important;
+  }
+
+  .invoice-print-area .border-t,
+  .invoice-print-area .border-t-2 {
+    border-top: 1px solid black !important;
+  }
+
+  .invoice-print-area .border-black {
+    border-color: black !important;
+  }
+
+  /* Watermark styling */
+  .print-watermark {
+    opacity: 0.03 !important;
+    color: #999 !important;
+  }
+
+  /* Hide buttons and overlays */
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Remove card styling */
+  .invoice-print-area .shadow-lg,
+  .invoice-print-area .shadow,
+  .invoice-print-area .rounded-md,
+  .invoice-print-area .rounded-lg {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Page break for second copy */
+  .print\\:break-before-page {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  /* Show second copy only in print */
+  .print\\:block {
+    display: block !important;
+  }
+
+  /* Ensure images print properly */
+  .invoice-print-area img {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Fix table alignment */
+  .invoice-print-area table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .invoice-print-area td,
+  .invoice-print-area th {
+    padding: 0.25cm !important;
+  }
+
+  /* Prevent page breaks inside invoice content */
+  .invoice-print-area {
+    page-break-inside: avoid !important;
+  }
+
+  /* Hide modal backdrop */
+  .fixed.inset-0.bg-background {
+    position: static !important;
+    background: white !important;
+  }
+}
