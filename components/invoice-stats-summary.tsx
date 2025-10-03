@@ -40,25 +40,25 @@ export function InvoiceStatsSummary() {
   const summaryCards = [
     {
       title: "Total Revenue",
-      value: `$${stats.totalRevenue.toLocaleString()}`,
+      value: `Tshs ${stats.totalRevenue.toLocaleString()}`,
       subtitle: `${stats.totalInvoices} invoices`,
       color: "text-primary",
     },
     {
       title: "Paid",
-      value: `$${stats.paidRevenue.toLocaleString()}`,
+      value: `Tshs ${stats.paidRevenue.toLocaleString()}`,
       subtitle: `${stats.paidCount} invoices`,
       color: "text-green-500",
     },
     {
       title: "Pending",
-      value: `$${stats.pendingRevenue.toLocaleString()}`,
+      value: `Tshs ${stats.pendingRevenue.toLocaleString()}`,
       subtitle: `${stats.pendingCount} invoices`,
       color: "text-blue-500",
     },
     {
       title: "Overdue",
-      value: `$${stats.overdueRevenue.toLocaleString()}`,
+      value: `Tshs ${stats.overdueRevenue.toLocaleString()}`,
       subtitle: `${stats.overdueCount} invoices`,
       color: "text-red-500",
     },

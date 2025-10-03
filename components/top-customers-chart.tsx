@@ -60,7 +60,7 @@ export function TopCustomersChart() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold">${customer.totalRevenue.toLocaleString()}</p>
+                  <p className="font-semibold">Tshs {customer.totalRevenue.toLocaleString()}</p>
                   <p className="text-sm text-muted-foreground">{customer.invoiceCount} invoices</p>
                 </div>
               </div>

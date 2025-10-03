@@ -60,7 +60,7 @@ export function RevenueChart() {
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "6px",
                 }}
-                formatter={(value: number) => [`$${value.toLocaleString()}`, ""]}
+                formatter={(value: number) => [`Tshs ${value.toLocaleString()}`, ""]}
               />
               <Bar dataKey="paid" fill="hsl(var(--chart-1))" name="Paid" />
               <Bar dataKey="pending" fill="hsl(var(--chart-2))" name="Pending" />

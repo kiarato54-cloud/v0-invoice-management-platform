@@ -53,7 +53,7 @@ export function RecentInvoices() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <p className="font-medium text-sm">${invoice.total.toLocaleString()}</p>
+                    <p className="font-medium text-sm">Tshs {invoice.total.toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">{new Date(invoice.createdAt).toLocaleDateString()}</p>
                   </div>
                   <Badge className={getStatusColor(invoice.status)} variant="outline">

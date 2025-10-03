@@ -220,7 +220,7 @@ export function InvoiceList() {
                           <span className="font-medium">Customer:</span> {invoice.customer.name}
                         </div>
                         <div>
-                          <span className="font-medium">Amount:</span> ${invoice.total.toLocaleString()}
+                          <span className="font-medium">Amount:</span> Tshs {invoice.total.toLocaleString()}
                         </div>
                         <div>
                           <span className="font-medium">Date:</span> {new Date(invoice.createdAt).toLocaleDateString()}

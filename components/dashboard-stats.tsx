@@ -45,7 +45,7 @@ export function DashboardStats() {
     },
     {
       title: "Total Revenue",
-      value: `$${stats.totalRevenue.toLocaleString()}`,
+      value: `Tshs ${stats.totalRevenue.toLocaleString()}`,
       icon: (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path

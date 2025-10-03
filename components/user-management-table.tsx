@@ -208,7 +208,7 @@ export function UserManagementTable() {
                           <span className="font-medium">Invoices:</span> {user.invoiceCount}
                         </div>
                         <div>
-                          <span className="font-medium">Revenue:</span> ${user.totalRevenue.toLocaleString()}
+                          <span className="font-medium">Revenue:</span> Tshs {user.totalRevenue.toLocaleString()}
                         </div>
                       </div>
                     </div>
