@@ -12,6 +12,8 @@ import { type Customer, type Invoice, type InvoiceItem, saveInvoice } from "@/li
 import { useCustomers } from "@/lib/hooks/useCustomers"
 import { useAuth } from "./auth-provider"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
+import { saveCustomer } from "@/lib/invoice-data"
 
 export function InvoiceForm() {
   const { user } = useAuth()
