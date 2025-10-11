@@ -8,14 +8,15 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { type Customer, type Invoice, type InvoiceItem, getCustomers, saveInvoice } from "@/lib/invoice-data"
+import { type Customer, type Invoice, type InvoiceItem, saveInvoice } from "@/lib/invoice-data"
+import { useCustomers } from "@/lib/hooks/useCustomers"
 import { useAuth } from "./auth-provider"
 import { useRouter } from "next/navigation"
 
 export function InvoiceForm() {
   const { user } = useAuth()
   const router = useRouter()
-  const customers = getCustomers()
+  const { customers, loading, error } = useCustomers()
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [newCustomer, setNewCustomer] = useState({
@@ -82,7 +83,7 @@ export function InvoiceForm() {
 
   const calculateTotals = () => {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0)
-    const tax = subtotal * 0.18 // Changed tax rate to 18% (typical for Tanzania VAT)
+    const tax = subtotal * 0.18
     const total = subtotal + tax
     return { subtotal, tax, total }
   }
@@ -123,7 +124,7 @@ export function InvoiceForm() {
         vehiclePlateNumber,
       }
 
-      saveInvoice(invoice)
+      await saveInvoice(invoice)
       router.push("/dashboard/invoices")
     } catch (error) {
       console.error("Error creating invoice:", error)
@@ -134,6 +135,20 @@ export function InvoiceForm() {
   }
 
   const { subtotal, tax, total } = calculateTotals()
+
+  // Show loading state
+  if (loading) {
+    return <div className="flex justify-center p-8">Loading customers...</div>
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="text-center text-destructive p-8">
+        Error loading customers: {error}
+      </div>
+    )
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
