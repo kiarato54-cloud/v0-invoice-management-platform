@@ -176,7 +176,7 @@ export const getCustomers = async (): Promise<Customer[]> => {
   }))
 }
 
-eexport const saveCustomer = async (customer: Customer): Promise<void> => {
+export const saveCustomer = async (customer: Customer): Promise<void> => {
   const supabase = createClient()
 
   // Get current user for created_by
