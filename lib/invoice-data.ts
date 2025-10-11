@@ -28,14 +28,14 @@ export interface Invoice {
   customer: Customer
   items: InvoiceItem[]
   subtotal: number
-  tax: number
-  total: number
+  tax: number  // This maps to tax_amount in database
+  total: number  // This maps to total_amount in database
   status: "draft" | "sent" | "paid" | "overdue"
   createdBy: string
   createdAt: string
   dueDate: string
   notes?: string
-  storeKeeperName?: string
+  storeKeeperName?: string  // This maps to store_keeper_name in database
   salesOfficerName?: string
   driverName?: string
   vehiclePlateNumber?: string
