@@ -105,7 +105,7 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
   } = await supabase.auth.getUser()
   if (!user) throw new Error("User not authenticated")
 
-  // Insert or update invoice
+  // Insert or update invoice - USE CORRECT COLUMN NAMES
   const { data: invoiceData, error: invoiceError } = await supabase
     .from("invoices")
     .upsert({
@@ -114,12 +114,12 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
       customer_id: invoice.customerId,
       user_id: user.id,
       subtotal: invoice.subtotal,
-      tax: invoice.tax,
-      total: invoice.total,
+      tax_amount: invoice.tax,  // Changed from 'tax' to 'tax_amount'
+      total_amount: invoice.total,  // Changed from 'total' to 'total_amount'
       status: invoice.status,
       due_date: invoice.dueDate,
       notes: invoice.notes,
-      storekeeper_name: invoice.storeKeeperName,
+      store_keeper_name: invoice.storeKeeperName,  // Fixed: store_keeper_name
       sales_officer_name: invoice.salesOfficerName,
       driver_name: invoice.driverName,
       vehicle_plate_number: invoice.vehiclePlateNumber,
@@ -135,20 +135,22 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
   // Delete existing items and insert new ones
   await supabase.from("invoice_items").delete().eq("invoice_id", invoice.id)
 
-  const { error: itemsError } = await supabase.from("invoice_items").insert(
-    invoice.items.map((item) => ({
-      invoice_id: invoice.id,
-      name: item.name,
-      description: item.description,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
-      total: item.total,
-    })),
-  )
+  if (invoice.items.length > 0) {
+    const { error: itemsError } = await supabase.from("invoice_items").insert(
+      invoice.items.map((item) => ({
+        invoice_id: invoice.id,
+        name: item.name,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        total: item.total,
+      })),
+    )
 
-  if (itemsError) {
-    console.error("[v0] Error saving invoice items:", itemsError)
-    throw itemsError
+    if (itemsError) {
+      console.error("[v0] Error saving invoice items:", itemsError)
+      throw itemsError
+    }
   }
 }
 
