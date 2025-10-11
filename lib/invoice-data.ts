@@ -74,13 +74,13 @@ export const getInvoices = async (): Promise<Invoice[]> => {
       paymentMethod: inv.customer.payment_method,
     },
     items: inv.items.map((item: any) => ({
-      id: item.id,
-      name: item.name,
-      description: item.description,
-      quantity: item.quantity,
-      unitPrice: item.unit_price,
-      total: item.total,
-    })),
+  id: item.id,
+  name: item.description,    // ✅ Use description as name
+  description: item.description,
+  quantity: item.quantity,
+  unitPrice: item.unit_price,
+  total: item.total_price,   // ✅ Use total_price
+})),
     subtotal: inv.subtotal,
     tax: inv.tax_amount,  // ✅ Fixed: use tax_amount from database
     total: inv.total_amount,  // ✅ Fixed: use total_amount from database
