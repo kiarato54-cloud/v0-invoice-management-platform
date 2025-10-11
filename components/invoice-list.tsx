@@ -10,32 +10,33 @@ import { useAuth } from "./auth-provider"
 import { InvoicePreview } from "./invoice-preview"
 import { hasPermission } from "@/lib/auth"
 
-export function InvoiceList() {
+eexport function InvoiceList() {
   const { user } = useAuth()
-  const [invoices, setInvoices] = useState<Invoice[]>(getInvoices())
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [dateFilter, setDateFilter] = useState<string>("all")
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+  const { invoices, loading, error, refetch } = useInvoices() // ✅ Get refetch function
 
-  const filteredInvoices = useMemo(() => {
-    let filtered = invoices
+  const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice["status"]) => {
+    try {
+      // Find the invoice to update
+      const invoiceToUpdate = invoices.find(inv => inv.id === invoiceId)
+      if (!invoiceToUpdate) {
+        alert("Invoice not found")
+        return
+      }
 
-    // Role-based filtering
-    if (user?.role === "sales_officer") {
-      filtered = filtered.filter((invoice) => invoice.createdBy === user.id)
+      // Update in database
+      await saveInvoice({ 
+        ...invoiceToUpdate, 
+        status: newStatus 
+      })
+      
+      // Refetch to get fresh data from server
+      await refetch()
+      
+    } catch (error) {
+      console.error("Error updating invoice status:", error)
+      alert("Failed to update invoice status. Please try again.")
     }
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (invoice) =>
-          invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          invoice.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          invoice.customer.email.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
-    }
-
+  }
     // Status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter((invoice) => invoice.status === statusFilter)
