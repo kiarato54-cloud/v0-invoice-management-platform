@@ -95,34 +95,34 @@ export function InvoiceForm() {
     setIsLoading(true)
 
     try {
-      const customer = isNewCustomer ? { ...newCustomer } : selectedCustomer
+     const customer = isNewCustomer ? { ...newCustomer } : selectedCustomer
 
-      if (!customer) {
-        alert("Please select or add a customer")
-        return
-      }
+if (!customer) {
+  alert("Please select or add a customer")
+  return
+}
 
-      const { subtotal, tax, total } = calculateTotals()
+const { subtotal, tax, total } = calculateTotals()
 
-      const invoice: Invoice = {
-        invoiceNumber: `HHC-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
-        customerId: customer.id,
-        customer,
-        items: items.filter((item) => item.name.trim() !== ""),
-        subtotal,
-        tax,
-        total,
-        status: "draft",
-        createdBy: user.id,
-        createdAt: new Date().toISOString().split("T")[0],
-        dueDate,
-        notes,
-        storeKeeperName,
-        salesOfficerName,
-        driverName,
-        vehiclePlateNumber,
-      }
-
+const invoice: Invoice = {
+  // No id - let database generate it
+  invoiceNumber: `HHC-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+  customerId: customer.id || '', // Use empty string if no ID
+  customer,
+  items: items.filter((item) => item.name.trim() !== ""),
+  subtotal,
+  tax,
+  total,
+  status: "draft",
+  createdBy: user.id,
+  createdAt: new Date().toISOString().split("T")[0],
+  dueDate,
+  notes,
+  storeKeeperName,
+  salesOfficerName,
+  driverName,
+  vehiclePlateNumber,
+}
       await saveInvoice(invoice)
       router.push("/dashboard/invoices")
     } catch (error) {
