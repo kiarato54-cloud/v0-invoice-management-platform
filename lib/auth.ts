@@ -28,11 +28,43 @@ export const login = async (email: string, password: string): Promise<User | nul
   }
 
   // Fetch user profile from users table
-  const { data: userData, error: userError } = await supabase.from("users").select("*").eq("id", data.user.id).single()
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", data.user.id)
+    .single()
 
   if (userError || !userData) {
     console.error("[v0] User data fetch error:", userError?.message || "Unknown error")
-    return null
+    
+    // ✅ Create user profile if it doesn't exist
+    const { data: newUserData } = await supabase
+      .from("users")
+      .insert([
+        {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.user_metadata?.name || data.user.email,
+          role: data.user.user_metadata?.role || "sales_officer",
+          created_at: new Date().toISOString(),
+          is_active: true,
+        },
+      ])
+      .select()
+      .single()
+
+    if (!newUserData) {
+      return null
+    }
+
+    return {
+      id: newUserData.id,
+      email: newUserData.email,
+      name: newUserData.name,
+      role: newUserData.role,
+      createdAt: newUserData.created_at,
+      isActive: newUserData.is_active,
+    }
   }
 
   const user: User = {
@@ -41,7 +73,7 @@ export const login = async (email: string, password: string): Promise<User | nul
     name: userData.name || userData.full_name || userData.email,
     role: userData.role,
     createdAt: userData.created_at,
-    isActive: userData.is_active ?? true, // Use nullish coalescing for safety
+    isActive: userData.is_active ?? true,
   }
 
   return user
