@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getInvoices, saveInvoice, type Invoice } from "@/lib/invoice-data"
+import { saveInvoice, type Invoice } from "@/lib/invoice-data"
+import { useInvoices } from "@/lib/hooks/useInvoices"
 import { useAuth } from "./auth-provider"
 import { InvoicePreview } from "./invoice-preview"
 import { hasPermission } from "@/lib/auth"
@@ -14,29 +15,29 @@ export function InvoiceList() {
   const { user } = useAuth()
   const { invoices, loading, error, refetch } = useInvoices() // ✅ Get refetch function
 
-  const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice["status"]) => {
-    try {
-      // Find the invoice to update
-      const invoiceToUpdate = invoices.find(inv => inv.id === invoiceId)
-      if (!invoiceToUpdate) {
-        alert("Invoice not found")
-        return
-      }
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [dateFilter, setDateFilter] = useState<string>("all")
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
 
-      // Update in database
-      await saveInvoice({ 
-        ...invoiceToUpdate, 
-        status: newStatus 
-      })
-      
-      // Refetch to get fresh data from server
-      await refetch()
-      
-    } catch (error) {
-      console.error("Error updating invoice status:", error)
-      alert("Failed to update invoice status. Please try again.")
+  const filteredInvoices = useMemo(() => {
+    let filtered = Array.isArray(invoices) ? invoices : []
+
+    // Role-based filtering
+    if (user?.role === "sales_officer") {
+      filtered = filtered.filter((invoice) => invoice.createdBy === user.id)
     }
-  }
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (invoice) =>
+          invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          invoice.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          invoice.customer.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    }
+
     // Status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter((invoice) => invoice.status === statusFilter)
@@ -69,22 +70,31 @@ export function InvoiceList() {
 
     return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [invoices, searchTerm, statusFilter, dateFilter, user])
-}
-const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice["status"]) => {
-  try {
-    // 1. Update in database
-    const invoiceToUpdate = invoices.find(inv => inv.id === invoiceId)
-    if (!invoiceToUpdate) return
-    await saveInvoice({ ...invoiceToUpdate, status: newStatus })
-    
-    // 2. Refetch all invoices
-    await refetchInvoices()
-    
-  } catch (error) {
-    console.error("Error updating invoice:", error)
-    alert("Failed to update invoice status")
+
+  const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice["status"]) => {
+    try {
+      // Find the invoice to update
+      const invoiceToUpdate = invoices.find(inv => inv.id === invoiceId)
+      if (!invoiceToUpdate) {
+        alert("Invoice not found")
+        return
+      }
+
+      // Update in database
+      await saveInvoice({ 
+        ...invoiceToUpdate, 
+        status: newStatus 
+      })
+      
+      // Refetch to get fresh data from server
+      await refetch()
+      
+    } catch (error) {
+      console.error("Error updating invoice status:", error)
+      alert("Failed to update invoice status. Please try again.")
+    }
   }
-}
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "paid":
@@ -105,6 +115,69 @@ const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice["status
     if (hasPermission(user, "all")) return true
     if (user.role === "sales_officer" && invoice.createdBy === user.id) return true
     return false
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Search & Filter</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="space-y-2">
+                  <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-10 w-full bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="border border-border rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 space-y-2">
+                      <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-9 w-16 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="h-9 w-32 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-destructive">
+              Error loading invoices: {error}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
