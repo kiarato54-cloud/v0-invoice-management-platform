@@ -146,7 +146,6 @@ if (!customer || !customer.id) {
       driverName,
       vehiclePlateNumber,
     }
-    try{
       await saveInvoice(invoice)
       router.push("/dashboard/invoices")
     } catch (error) {
