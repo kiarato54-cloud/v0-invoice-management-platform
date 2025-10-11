@@ -7,7 +7,7 @@ import { useMemo } from "react"
 
 export function DashboardStats() {
   const { user } = useAuth()
-  const invoices = getInvoices()
+  const invoices = getInvoices() || []
 
   const stats = useMemo(() => {
     const userInvoices = user?.role === "sales_officer" ? invoices.filter((inv) => inv.createdBy === user.id) : invoices
