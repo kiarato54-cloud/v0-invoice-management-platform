@@ -176,11 +176,17 @@ export const getCustomers = async (): Promise<Customer[]> => {
   }))
 }
 
-export const saveCustomer = async (customer: Customer): Promise<void> => {
+eexport const saveCustomer = async (customer: Customer): Promise<void> => {
   const supabase = createClient()
 
+  // Get current user for created_by
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("User not authenticated")
+
   const { error } = await supabase.from("customers").upsert({
-    id: customer.id, // This can be empty if you're using Option A
+    id: customer.id,
     name: customer.name,
     email: customer.email,
     phone: customer.phone,
@@ -188,7 +194,9 @@ export const saveCustomer = async (customer: Customer): Promise<void> => {
     city: customer.city,
     state: customer.state,
     zip_code: customer.zipCode,
-    payment_method: customer.paymentMethod,
+    created_by: user.id,  // ← ADD THIS LINE
+    // Remove this line if payment_method doesn't exist:
+    // payment_method: customer.paymentMethod,
   })
 
   if (error) {
