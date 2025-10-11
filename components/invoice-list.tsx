@@ -10,7 +10,7 @@ import { useAuth } from "./auth-provider"
 import { InvoicePreview } from "./invoice-preview"
 import { hasPermission } from "@/lib/auth"
 
-eexport function InvoiceList() {
+export function InvoiceList() {
   const { user } = useAuth()
   const { invoices, loading, error, refetch } = useInvoices() // ✅ Get refetch function
 
