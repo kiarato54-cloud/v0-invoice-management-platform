@@ -88,41 +88,49 @@ export function InvoiceForm() {
     return { subtotal, tax, total }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  if (!user) return
 
-    setIsLoading(true)
+  setIsLoading(true)
 
-    try {
-     const customer = isNewCustomer ? { ...newCustomer } : selectedCustomer
+  try {
+    let customer = selectedCustomer
 
-if (!customer) {
-  alert("Please select or add a customer")
-  return
-}
+    // If it's a new customer, generate a proper UUID
+    if (isNewCustomer) {
+      customer = {
+        id: crypto.randomUUID(), // Generate proper UUID
+        ...newCustomer
+      }
+    }
 
-const { subtotal, tax, total } = calculateTotals()
+    if (!customer || !customer.id) {
+      alert("Please select or add a customer")
+      return
+    }
 
-const invoice: Invoice = {
-  // No id - let database generate it
-  invoiceNumber: `HHC-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
-  customerId: customer.id || '', // Use empty string if no ID
-  customer,
-  items: items.filter((item) => item.name.trim() !== ""),
-  subtotal,
-  tax,
-  total,
-  status: "draft",
-  createdBy: user.id,
-  createdAt: new Date().toISOString().split("T")[0],
-  dueDate,
-  notes,
-  storeKeeperName,
-  salesOfficerName,
-  driverName,
-  vehiclePlateNumber,
-}
+    const { subtotal, tax, total } = calculateTotals()
+
+    const invoice: Invoice = {
+      // No id - let database generate it
+      invoiceNumber: `HHC-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+      customerId: customer.id, // Now this is a proper UUID
+      customer,
+      items: items.filter((item) => item.name.trim() !== ""),
+      subtotal,
+      tax,
+      total,
+      status: "draft",
+      createdBy: user.id,
+      createdAt: new Date().toISOString().split("T")[0],
+      dueDate,
+      notes,
+      storeKeeperName,
+      salesOfficerName,
+      driverName,
+      vehiclePlateNumber,
+    }
       await saveInvoice(invoice)
       router.push("/dashboard/invoices")
     } catch (error) {
