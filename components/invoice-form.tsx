@@ -105,7 +105,6 @@ export function InvoiceForm() {
       const { subtotal, tax, total } = calculateTotals()
 
       const invoice: Invoice = {
-        id: Date.now().toString(),
         invoiceNumber: `HHC-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
         customerId: customer.id,
         customer,
