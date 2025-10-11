@@ -146,13 +146,13 @@ if (!customer || !customer.id) {
       driverName,
       vehiclePlateNumber,
     }
-    try {
-  await saveInvoice(invoice)
-  router.push("/dashboard/invoices")
-} catch (error) {
-  console.error("Error creating invoice:", error)
-  alert("Failed to create invoice. Please try again.")
-} finally {
+    try{
+      await saveInvoice(invoice)
+      router.push("/dashboard/invoices")
+    } catch (error) {
+      console.error("Error creating invoice:", error)
+      alert("Failed to create invoice. Please try again.")
+    } finally {
       setIsLoading(false)
     }
   }
