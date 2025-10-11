@@ -105,32 +105,28 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
   } = await supabase.auth.getUser()
   if (!user) throw new Error("User not authenticated")
 
- const { data: invoiceData, error: invoiceError } = await supabase
-  .from("invoices")
-  .upsert({
-    invoice_number: invoice.invoiceNumber,
-    customer_id: invoice.customerId,
-    user_id: user.id,
-    created_by: user.id,  // ← ADD THIS LINE
-    subtotal: invoice.subtotal,
-    tax_amount: invoice.tax,
-    total_amount: invoice.total,
-    status: invoice.status,
-    due_date: invoice.dueDate,
-    notes: invoice.notes,
-    store_keeper_name: invoice.storeKeeperName,
-    sales_officer_name: invoice.salesOfficerName,
-    driver_name: invoice.driverName,
-    vehicle_plate_number: invoice.vehiclePlateNumber,
-  })
-    .select()
-    .single()
+ // Use the ACTUAL invoice ID returned from the database
+const savedInvoiceId = invoiceData.id
 
-  if (invoiceError) {
-    console.error("[v0] Error saving invoice:", invoiceError)
-    throw invoiceError
+// Delete existing items and insert new ones using the REAL invoice ID
+await supabase.from("invoice_items").delete().eq("invoice_id", savedInvoiceId)
+
+if (invoice.items.length > 0) {
+  const { error: itemsError } = await supabase.from("invoice_items").insert(
+    invoice.items.map((item) => ({
+      invoice_id: savedInvoiceId, // ✅ Use the real database-generated ID
+      description: item.name,
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
+      total_price: item.total,
+    })),
+  )
+
+  if (itemsError) {
+    console.error("[v0] Error saving invoice items:", itemsError)
+    throw itemsError
   }
-
+}
   // Delete existing items and insert new ones
   await supabase.from("invoice_items").delete().eq("invoice_id", invoice.id)
 
