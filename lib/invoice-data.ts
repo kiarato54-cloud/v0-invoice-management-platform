@@ -180,7 +180,7 @@ export const saveCustomer = async (customer: Customer): Promise<void> => {
   const supabase = createClient()
 
   const { error } = await supabase.from("customers").upsert({
-    id: customer.id,
+    id: customer.id, // This can be empty if you're using Option A
     name: customer.name,
     email: customer.email,
     phone: customer.phone,
