@@ -136,15 +136,14 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
 
   if (invoice.items.length > 0) {
     const { error: itemsError } = await supabase.from("invoice_items").insert(
-      invoice.items.map((item) => ({
-        invoice_id: invoice.id,
-        name: item.name,
-        description: item.description,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        total: item.total,
-      })),
-    )
+  invoice.items.map((item) => ({
+    invoice_id: invoice.id,
+    description: item.name,    // ✅ Use description column for item name
+    quantity: item.quantity,
+    unit_price: item.unitPrice,
+    total_price: item.total,   // ✅ Use total_price column
+  })),
+)
 
     if (itemsError) {
       console.error("[v0] Error saving invoice items:", itemsError)
