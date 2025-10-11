@@ -5,19 +5,12 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { saveInvoice, type Invoice } from "@/lib/invoice-data"
-import { useInvoices } from "@/lib/hooks/useInvoices"
+import { getInvoices, saveInvoice, type Invoice } from "@/lib/invoice-data"
 import { useAuth } from "./auth-provider"
 import { InvoicePreview } from "./invoice-preview"
 import { hasPermission } from "@/lib/auth"
 
-export function InvoiceList() {
-  const { user } = useAuth()
-  const { invoices, loading, error } = useInvoices()
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [dateFilter, setDateFilter] = useState<string>("all")
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+eexport function InvoiceList() {
   const { user } = useAuth()
   const { invoices, loading, error, refetch } = useInvoices() // ✅ Get refetch function
 
