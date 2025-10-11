@@ -95,7 +95,7 @@ export function InvoiceForm() {
     setIsLoading(true)
 
     try {
-      const customer = isNewCustomer ? { id: Date.now().toString(), ...newCustomer } : selectedCustomer
+      const customer = isNewCustomer ? { ...newCustomer } : selectedCustomer
 
       if (!customer) {
         alert("Please select or add a customer")
