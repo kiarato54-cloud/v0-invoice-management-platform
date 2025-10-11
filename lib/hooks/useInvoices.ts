@@ -1,3 +1,6 @@
+import { useState, useEffect } from 'react' // ✅ Add useState import
+import { Invoice, getInvoices } from '@/lib/invoice-data'
+
 export function useInvoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
@@ -24,6 +27,6 @@ export function useInvoices() {
     invoices, 
     loading, 
     error, 
-    refetch: fetchInvoices  // ✅ Add refetch function
+    refetch: fetchInvoices
   }
 }
