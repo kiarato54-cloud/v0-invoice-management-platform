@@ -97,20 +97,33 @@ const handleSubmit = async (e: React.FormEvent) => {
   setIsLoading(true)
 
   try {
-    let customer = selectedCustomer
+   let customer = selectedCustomer
 
-    // If it's a new customer, generate a proper UUID
-    if (isNewCustomer) {
-      customer = {
-        id: crypto.randomUUID(), // Generate proper UUID
-        ...newCustomer
-      }
+// If it's a new customer, save it to the database first
+if (isNewCustomer) {
+  try {
+    // Create a proper customer object
+    const newCustomerData = {
+      id: crypto.randomUUID(),
+      ...newCustomer
     }
+    
+    // Save the customer to the database
+    await saveCustomer(newCustomerData)
+    
+    // Use the saved customer
+    customer = newCustomerData
+  } catch (error) {
+    console.error("Error saving customer:", error)
+    alert("Failed to save customer. Please try again.")
+    return
+  }
+}
 
-    if (!customer || !customer.id) {
-      alert("Please select or add a customer")
-      return
-    }
+if (!customer || !customer.id) {
+  alert("Please select or add a customer")
+  return
+}
 
     const { subtotal, tax, total } = calculateTotals()
 
