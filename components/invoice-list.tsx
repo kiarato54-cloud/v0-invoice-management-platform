@@ -69,7 +69,7 @@ export function InvoiceList() {
 
     return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [invoices, searchTerm, statusFilter, dateFilter, user])
-
+}
 const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice["status"]) => {
   try {
     // 1. Update in database
