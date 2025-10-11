@@ -70,18 +70,21 @@ eexport function InvoiceList() {
     return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [invoices, searchTerm, statusFilter, dateFilter, user])
 
-  const updateInvoiceStatus = (invoiceId: string, newStatus: Invoice["status"]) => {
-    const updatedInvoices = invoices.map((invoice) => {
-      if (invoice.id === invoiceId) {
-        const updatedInvoice = { ...invoice, status: newStatus }
-        saveInvoice(updatedInvoice)
-        return updatedInvoice
-      }
-      return invoice
-    })
-    setInvoices(updatedInvoices)
+const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice["status"]) => {
+  try {
+    // 1. Update in database
+    const invoiceToUpdate = invoices.find(inv => inv.id === invoiceId)
+    if (!invoiceToUpdate) return
+    await saveInvoice({ ...invoiceToUpdate, status: newStatus })
+    
+    // 2. Refetch all invoices
+    await refetchInvoices()
+    
+  } catch (error) {
+    console.error("Error updating invoice:", error)
+    alert("Failed to update invoice status")
   }
-
+}
   const getStatusColor = (status: string) => {
     switch (status) {
       case "paid":
