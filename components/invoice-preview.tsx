@@ -11,82 +11,9 @@ interface InvoicePreviewProps {
 
 export function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) {
-      window.print()
-      return
-    }
-
-    const invoiceContent = document.querySelector('.invoice-print-area')?.innerHTML
-    
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Invoice ${invoice.invoiceNumber} - 2 Copies</title>
-          <meta charset="UTF-8">
-          <style>
-            .invoice-print-two-copies * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-              font-family: Arial, sans-serif !important;
-            }
-            
-            .invoice-print-two-copies body { 
-              margin: 20px !important; 
-              padding: 0 !important;
-              background: white !important;
-              font-size: 14px !important;
-              line-height: 1.4 !important;
-            }
-            
-            .invoice-print-two-copies .invoice-copy { 
-              margin-bottom: 0 !important; 
-            }
-            
-            .invoice-print-two-copies .page-break { 
-              page-break-after: always !important; 
-              margin-top: 40px !important;
-            }
-            
-            @media print {
-              .invoice-print-two-copies body { 
-                margin: 0 !important; 
-                padding: 0 !important;
-              }
-              .invoice-print-two-copies .no-print { 
-                display: none !important; 
-              }
-              .invoice-print-two-copies .page-break { 
-                page-break-after: always !important;
-                margin-top: 0 !important;
-              }
-              .invoice-print-two-copies * {
-                color: black !important;
-                background: transparent !important;
-              }
-            }
-          </style>
-        </head>
-        <body class="invoice-print-two-copies">
-          <div class="invoice-copy">
-            ${invoiceContent}
-          </div>
-          <div class="page-break"></div>
-          <div class="invoice-copy">
-            ${invoiceContent}
-          </div>
-        </body>
-      </html>
-    `)
-
-    printWindow.document.close()
-    printWindow.focus()
-    
-    setTimeout(() => {
-      printWindow.print()
-    }, 250)
+    // Simple and reliable - just trigger the browser's print
+    // Your CSS already handles the print styling
+    window.print()
   }
 
   return (
@@ -245,7 +172,7 @@ export function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
-            <Button onClick={handlePrint}>Print Invoice (2 Copies)</Button>
+            <Button onClick={handlePrint}>Print Invoice</Button>
           </div>
         </CardContent>
       </Card>
