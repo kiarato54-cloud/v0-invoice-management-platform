@@ -22,7 +22,7 @@ export interface InvoiceItem {
 }
 
 export interface Invoice {
-  id: string
+  id?: string // ← Change to optional with ?
   invoiceNumber: string
   customerId: string
   customer: Customer
