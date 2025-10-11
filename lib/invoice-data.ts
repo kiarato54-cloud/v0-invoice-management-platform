@@ -109,7 +109,6 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
   const { data: invoiceData, error: invoiceError } = await supabase
     .from("invoices")
     .upsert({
-      id: invoice.id,
       invoice_number: invoice.invoiceNumber,
       customer_id: invoice.customerId,
       user_id: user.id,
