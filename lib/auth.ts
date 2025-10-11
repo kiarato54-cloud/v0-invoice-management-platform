@@ -55,7 +55,7 @@ export const signup = async (
 ): Promise<{ user: User | null; error: string | null }> => {
   const supabase = createClient()
 
-  // Sign up the user with Supabase Auth - the trigger will create the profile automatically
+  // Sign up the user with Supabase Auth
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -77,35 +77,34 @@ export const signup = async (
     return { user: null, error: "Signup failed - no user returned" }
   }
 
-  // Wait a moment for the trigger to create the profile
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  // Fetch the created user profile
-  const { data: userData, error: fetchError } = await supabase.from("users").select("*").eq("id", data.user.id).single()
-
-  if (fetchError || !userData) {
-    console.error("[v0] User profile fetch error:", fetchError?.message)
-    // User was created in auth but profile fetch failed - they can still login
-    return {
-      user: {
+  // ✅ EXPLICITLY create user profile in public.users table
+  const { data: userData, error: profileError } = await supabase
+    .from("users")
+    .insert([
+      {
         id: data.user.id,
         email: email,
         name: name,
         role: role,
-        createdAt: new Date().toISOString(),
-        isActive: true,
+        created_at: new Date().toISOString(),
+        is_active: true,
       },
-      error: null,
-    }
+    ])
+    .select()
+    .single()
+
+  if (profileError) {
+    console.error("[v0] User profile creation error:", profileError.message)
+    return { user: null, error: `Profile creation failed: ${profileError.message}` }
   }
 
   const user: User = {
     id: userData.id,
     email: userData.email,
-    name: userData.name || userData.full_name || email,
+    name: userData.name,
     role: userData.role,
     createdAt: userData.created_at,
-    isActive: userData.is_active ?? true,
+    isActive: userData.is_active,
   }
 
   return { user, error: null }
