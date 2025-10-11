@@ -2,18 +2,22 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { getInvoices } from "@/lib/invoice-data"
+import { useInvoices } from "@/lib/hooks/useInvoices"
 import { useAuth } from "./auth-provider"
 import { useMemo } from "react"
 
 export function RecentInvoices() {
   const { user } = useAuth()
-  const invoices = getInvoices()
+  const { invoices, loading, error } = useInvoices()
 
   const recentInvoices = useMemo(() => {
-    const userInvoices = user?.role === "sales_officer" ? invoices.filter((inv) => inv.createdBy === user.id) : invoices
+    const userInvoices = user?.role === "sales_officer" 
+      ? invoices.filter((inv) => inv.createdBy === user.id) 
+      : invoices
 
-    return userInvoices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5)
+    return userInvoices
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5)
   }, [invoices, user])
 
   const getStatusColor = (status: string) => {
@@ -29,6 +33,54 @@ export function RecentInvoices() {
       default:
         return "bg-gray-500/10 text-gray-500 border-gray-500/20"
     }
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Invoices</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <div className="space-y-2">
+                      <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right space-y-2">
+                    <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-3 w-12 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                  <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Invoices</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-destructive py-4">
+            Error loading invoices: {error}
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
