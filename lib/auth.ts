@@ -109,37 +109,69 @@ export const signup = async (
     return { user: null, error: "Signup failed - no user returned" }
   }
 
-  // ✅ EXPLICITLY create user profile in public.users table
-  const { data: userData, error: profileError } = await supabase
-    .from("users")
-    .insert([
-      {
-        id: data.user.id,
-        email: email,
-        name: name,
-        role: role,
-        created_at: new Date().toISOString(),
-        is_active: true,
-      },
-    ])
-    .select()
-    .single()
+  // Wait a moment for any database trigger to create the profile
+  await new Promise((resolve) => setTimeout(resolve, 2000))
 
-  if (profileError) {
-    console.error("[v0] User profile creation error:", profileError.message)
-    return { user: null, error: `Profile creation failed: ${profileError.message}` }
+  try {
+    // Try to insert the user profile, but handle duplicate key errors
+    const { data: userData, error: profileError } = await supabase
+      .from("users")
+      .insert([
+        {
+          id: data.user.id,
+          email: email,
+          name: name,
+          role: role,
+          created_at: new Date().toISOString(),
+          is_active: true,
+        },
+      ])
+      .select()
+      .single()
+
+    // If it's a duplicate key error, just fetch the existing user
+    if (profileError && profileError.code === '23505') {
+      console.log("[v0] User profile already exists, fetching...")
+      const { data: existingUser } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", data.user.id)
+        .single()
+
+      if (existingUser) {
+        const user: User = {
+          id: existingUser.id,
+          email: existingUser.email,
+          name: existingUser.name,
+          role: existingUser.role,
+          createdAt: existingUser.created_at,
+          isActive: existingUser.is_active,
+        }
+        return { user, error: null }
+      }
+    }
+
+    if (profileError && profileError.code !== '23505') {
+      console.error("[v0] User profile creation error:", profileError.message)
+      return { user: null, error: `Profile creation failed: ${profileError.message}` }
+    }
+
+    // If insert was successful
+    const user: User = {
+      id: userData.id,
+      email: userData.email,
+      name: userData.name,
+      role: userData.role,
+      createdAt: userData.created_at,
+      isActive: userData.is_active,
+    }
+
+    return { user, error: null }
+
+  } catch (err) {
+    console.error("[v0] Unexpected error during signup:", err)
+    return { user: null, error: "Unexpected error during signup" }
   }
-
-  const user: User = {
-    id: userData.id,
-    email: userData.email,
-    name: userData.name,
-    role: userData.role,
-    createdAt: userData.created_at,
-    isActive: userData.is_active,
-  }
-
-  return { user, error: null }
 }
 
 export const logout = async () => {
