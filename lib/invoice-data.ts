@@ -82,14 +82,14 @@ export const getInvoices = async (): Promise<Invoice[]> => {
       total: item.total,
     })),
     subtotal: inv.subtotal,
-    tax: inv.tax,
-    total: inv.total,
+    tax: inv.tax_amount,  // ✅ Fixed: use tax_amount from database
+    total: inv.total_amount,  // ✅ Fixed: use total_amount from database
     status: inv.status,
     createdBy: inv.user_id,
     createdAt: inv.created_at,
     dueDate: inv.due_date,
     notes: inv.notes,
-    storeKeeperName: inv.storekeeper_name,
+    storeKeeperName: inv.store_keeper_name,  // ✅ Fixed: store_keeper_name (with underscore)
     salesOfficerName: inv.sales_officer_name,
     driverName: inv.driver_name,
     vehiclePlateNumber: inv.vehicle_plate_number,
