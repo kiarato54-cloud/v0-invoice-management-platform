@@ -1,16 +1,18 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getInvoices } from "@/lib/invoice-data"
+import { useInvoices } from "@/lib/hooks/useInvoices"
 import { useAuth } from "./auth-provider"
 import { useMemo } from "react"
 
 export function InvoiceStatsSummary() {
   const { user } = useAuth()
-  const invoices = getInvoices()
+  const { invoices, loading, error } = useInvoices()
 
   const stats = useMemo(() => {
-    const userInvoices = user?.role === "sales_officer" ? invoices.filter((inv) => inv.createdBy === user.id) : invoices
+    const userInvoices = user?.role === "sales_officer" 
+      ? invoices.filter((inv) => inv.createdBy === user.id) 
+      : invoices
 
     const totalInvoices = userInvoices.length
     const totalRevenue = userInvoices.reduce((sum, inv) => sum + inv.total, 0)
@@ -36,6 +38,40 @@ export function InvoiceStatsSummary() {
       averageInvoiceValue: totalInvoices > 0 ? totalRevenue / totalInvoices : 0,
     }
   }, [invoices, user])
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        {[1, 2, 3, 4].map(i => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-6 w-24 bg-gray-200 rounded animate-pulse mb-1"></div>
+              <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-destructive">
+              Error loading invoices: {error}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   const summaryCards = [
     {
