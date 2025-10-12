@@ -71,30 +71,28 @@ export function InvoiceList() {
     return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [invoices, searchTerm, statusFilter, dateFilter, user])
 
-  const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice["status"]) => {
-    try {
-      // Find the invoice to update
-      const invoiceToUpdate = invoices.find(inv => inv.id === invoiceId)
-      if (!invoiceToUpdate) {
-        alert("Invoice not found")
-        return
-      }
-
-      // Update in database
-      await saveInvoice({ 
-        ...invoiceToUpdate, 
-        status: newStatus 
-      })
-      
-      // Refetch to get fresh data from server
-      await refetch()
-      
-    } catch (error) {
-      console.error("Error updating invoice status:", error)
-      alert("Failed to update invoice status. Please try again.")
+const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice["status"]) => {
+  try {
+    // Find the invoice to update
+    const invoiceToUpdate = invoices.find(inv => inv.id === invoiceId)
+    if (!invoiceToUpdate) {
+      alert("Invoice not found")
+      return
     }
-  }
 
+    // ✅ FIX: Use updateInvoice instead of saveInvoice
+    await updateInvoice(invoiceId, { 
+      status: newStatus 
+    })
+    
+    // Refetch to get fresh data from server
+    await refetch()
+    
+  } catch (error) {
+    console.error("Error updating invoice status:", error)
+    alert("Failed to update invoice status. Please try again.")
+  }
+}
   const getStatusColor = (status: string) => {
     switch (status) {
       case "paid":
