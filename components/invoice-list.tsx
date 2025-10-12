@@ -10,6 +10,7 @@ import { useInvoices } from "@/lib/hooks/useInvoices"
 import { useAuth } from "./auth-provider"
 import { InvoicePreview } from "./invoice-preview"
 import { hasPermission } from "@/lib/auth"
+import { updateInvoice } from "@/lib/invoice-data"
 
 export function InvoiceList() {
   const { user } = useAuth()
