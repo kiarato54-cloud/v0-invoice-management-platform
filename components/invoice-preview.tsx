@@ -11,6 +11,11 @@ interface InvoicePreviewProps {
 
 export function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
   const handlePrint = () => {
+    // Debug: Check if data exists
+    console.log('Vehicle Plate:', invoice.vehiclePlateNumber)
+    console.log('Notes:', invoice.notes)
+    console.log('Invoice object:', invoice)
+    
     window.print()
   }
 
@@ -112,21 +117,21 @@ export function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
               <h3 className="font-semibold mb-3 print:text-black print:text-sm">Signatures:</h3>
               <div className="space-y-4">
                 <div>
-                  <div className="border-b border-black mb-1 pb-6 h-12">{/* Signature space */}</div>
+                  <div className="border-b border-black mb-1 pb-6 h-12"></div>
                   <p className="text-sm font-medium print:text-black">{invoice.storeKeeperName || "Store Keeper"}</p>
                   <p className="text-xs text-muted-foreground print:text-black">Store Keeper</p>
                 </div>
                 <div>
-                  <div className="border-b border-black mb-1 pb-6 h-12">{/* Signature space */}</div>
+                  <div className="border-b border-black mb-1 pb-6 h-12"></div>
                   <p className="text-sm font-medium print:text-black">{invoice.salesOfficerName || "Sales Officer"}</p>
                   <p className="text-xs text-muted-foreground print:text-black">Sales Officer</p>
                 </div>
                 <div>
-                  <div className="border-b border-black mb-1 pb-6 h-12">{/* Signature space */}</div>
+                  <div className="border-b border-black mb-1 pb-6 h-12"></div>
                   <p className="text-sm font-medium print:text-black">{invoice.driverName || "Driver"}</p>
                   <p className="text-xs text-muted-foreground print:text-black">Driver</p>
                   {invoice.vehiclePlateNumber && (
-                    <p className="text-xs text-muted-foreground print:text-black mt-1">
+                    <p className="text-xs text-muted-foreground print:text-black mt-1 print:!block print:!text-black">
                       Vehicle: {invoice.vehiclePlateNumber}
                     </p>
                   )}
@@ -151,11 +156,11 @@ export function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
             </div>
           </div>
 
-          {/* Notes */}
+          {/* Notes - Force display in print */}
           {invoice.notes && (
-            <div className="mb-6 print:mb-4">
+            <div className="mb-6 print:mb-4 print:!block">
               <h3 className="font-semibold mb-2 print:text-black print:text-sm">Notes:</h3>
-              <p className="text-sm text-muted-foreground print:text-black">{invoice.notes}</p>
+              <p className="text-sm text-muted-foreground print:text-black print:!text-black">{invoice.notes}</p>
             </div>
           )}
 
