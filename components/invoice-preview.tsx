@@ -1,17 +1,48 @@
 "use client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Invoice } from "@/lib/invoice-data"
 import Image from "next/image"
+import { useState } from "react"
 
 interface InvoicePreviewProps {
   invoice: Invoice
   onClose: () => void
 }
 
+const DEFAULT_NOTES = [
+  "Thank you for your business!",
+  "Payment due within 30 days",
+  "Delivery included",
+  "Installation service available",
+  "Warranty: 1 year on all products",
+  "Bulk discount available on next order",
+  "Quality guaranteed",
+  "Custom note..."
+]
+
 export function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
+  const [selectedNote, setSelectedNote] = useState(invoice.notes || "")
+  const [isCustomNote, setIsCustomNote] = useState(false)
+
   const handlePrint = () => {
     window.print()
+  }
+
+  const handleNoteChange = (value: string) => {
+    if (value === "custom") {
+      setIsCustomNote(true)
+      setSelectedNote("")
+    } else {
+      setIsCustomNote(false)
+      setSelectedNote(value)
+    }
+  }
+
+  const handleCustomNoteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedNote(e.target.value)
   }
 
   return (
@@ -112,21 +143,21 @@ export function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
               <h3 className="font-semibold mb-3 print:text-black print:text-sm">Signatures:</h3>
               <div className="space-y-4">
                 <div>
-                  <div className="border-b border-black mb-1 pb-6 h-12">{/* Signature space */}</div>
+                  <div className="border-b border-black mb-1 pb-6 h-12"></div>
                   <p className="text-sm font-medium print:text-black">{invoice.storeKeeperName || "Store Keeper"}</p>
                   <p className="text-xs text-muted-foreground print:text-black">Store Keeper</p>
                 </div>
                 <div>
-                  <div className="border-b border-black mb-1 pb-6 h-12">{/* Signature space */}</div>
+                  <div className="border-b border-black mb-1 pb-6 h-12"></div>
                   <p className="text-sm font-medium print:text-black">{invoice.salesOfficerName || "Sales Officer"}</p>
                   <p className="text-xs text-muted-foreground print:text-black">Sales Officer</p>
                 </div>
                 <div>
-                  <div className="border-b border-black mb-1 pb-6 h-12">{/* Signature space */}</div>
+                  <div className="border-b border-black mb-1 pb-6 h-12"></div>
                   <p className="text-sm font-medium print:text-black">{invoice.driverName || "Driver"}</p>
                   <p className="text-xs text-muted-foreground print:text-black">Driver</p>
                   {invoice.vehiclePlateNumber && (
-                    <p className="text-xs text-muted-foreground print:text-black mt-1">
+                    <p className="text-xs text-muted-foreground print:text-black mt-1 print:!block print:!text-black">
                       Vehicle: {invoice.vehiclePlateNumber}
                     </p>
                   )}
@@ -151,18 +182,46 @@ export function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
             </div>
           </div>
 
-          {/* Notes */}
-          {invoice.notes && (
-            <div className="mb-6 print:mb-4">
-              <h3 className="font-semibold mb-2 print:text-black print:text-sm">Notes:</h3>
-              <p className="text-sm text-muted-foreground print:text-black">{invoice.notes}</p>
+          {/* Notes Section with Dropdown */}
+          <div className="mb-6 print:mb-4 print:!block">
+            <h3 className="font-semibold mb-2 print:text-black print:text-sm">Notes:</h3>
+            
+            {/* Dropdown for note selection - Hidden during print */}
+            <div className="space-y-3 print:hidden">
+              <Select value={isCustomNote ? "custom" : selectedNote} onValueChange={handleNoteChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a note or write custom..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEFAULT_NOTES.map((note, index) => (
+                    <SelectItem key={index} value={note === "Custom note..." ? "custom" : note}>
+                      {note}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Custom note input - Only shown when "Custom note..." is selected */}
+              {isCustomNote && (
+                <Input
+                  placeholder="Type your custom note here..."
+                  value={selectedNote}
+                  onChange={handleCustomNoteChange}
+                  className="w-full"
+                />
+              )}
             </div>
-          )}
+            
+            {/* Display the actual note - Always visible, including during print */}
+            <p className="text-sm text-muted-foreground print:text-black print:!text-black mt-2">
+              {selectedNote || "Thank you for your business!"}
+            </p>
+          </div>
 
           {/* Footer */}
           <div className="text-center text-sm text-muted-foreground border-t border-black pt-3 print:text-black">
             <p>Thank you for your business!</p>
-            <p>Payment is due within 3 days of invoice date.</p>
+            <p>Payment is due within 30 days of invoice date.</p>
           </div>
 
           {/* Action Buttons */}
