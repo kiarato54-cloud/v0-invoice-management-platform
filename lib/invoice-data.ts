@@ -118,25 +118,33 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
   } = await supabase.auth.getUser()
   if (!user) throw new Error("User not authenticated")
 
+  // ✅ FIX: Include the ID in upsert for updates
+  const upsertData: any = {
+    invoice_number: invoice.invoiceNumber,
+    customer_id: invoice.customerId,
+    user_id: user.id,
+    created_by: user.id,
+    subtotal: invoice.subtotal,
+    tax_amount: invoice.tax,
+    total_amount: invoice.total,
+    status: invoice.status,
+    due_date: invoice.dueDate,
+    notes: invoice.notes,
+    store_keeper_name: invoice.storeKeeperName,
+    sales_officer_name: invoice.salesOfficerName,
+    driver_name: invoice.driverName,
+    vehicle_plate_number: invoice.vehiclePlateNumber,
+  }
+
+  // ✅ CRITICAL: Add ID if it exists (for updates)
+  if (invoice.id) {
+    upsertData.id = invoice.id
+  }
+
   // Insert or update invoice - USE CORRECT COLUMN NAMES
   const { data: invoiceData, error: invoiceError } = await supabase
     .from("invoices")
-    .upsert({
-      invoice_number: invoice.invoiceNumber,
-      customer_id: invoice.customerId,
-      user_id: user.id,
-      created_by: user.id,
-      subtotal: invoice.subtotal,
-      tax_amount: invoice.tax,
-      total_amount: invoice.total,
-      status: invoice.status,
-      due_date: invoice.dueDate,
-      notes: invoice.notes,
-      store_keeper_name: invoice.storeKeeperName,
-      sales_officer_name: invoice.salesOfficerName,
-      driver_name: invoice.driverName,
-      vehicle_plate_number: invoice.vehiclePlateNumber,
-    })
+    .upsert(upsertData) // ✅ Now includes ID for updates
     .select()
     .single()
 
@@ -173,7 +181,6 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
     }
   }
 }
-
 export const getCustomers = async (): Promise<Customer[]> => {
   const supabase = createClient()
 
