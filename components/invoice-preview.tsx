@@ -162,7 +162,7 @@ export function InvoicePreview({ invoice, onClose }: InvoicePreviewProps) {
           {/* Footer */}
           <div className="text-center text-sm text-muted-foreground border-t border-black pt-3 print:text-black">
             <p>Thank you for your business!</p>
-            <p>Payment is due within 30 days of invoice date.</p>
+            <p>Payment is due within 3 days of invoice date.</p>
           </div>
 
           {/* Action Buttons */}
