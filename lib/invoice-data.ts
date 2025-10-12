@@ -96,6 +96,19 @@ export const getInvoices = async (): Promise<Invoice[]> => {
   }))
 }
 
+// Add this to your /lib/invoice-data.ts file
+export async function updateInvoice(invoiceId: string, updateData: Partial<Invoice>) {
+  try {
+    return await db.invoice.update({
+      where: { id: invoiceId },
+      data: updateData
+    })
+  } catch (error) {
+    console.error('Error updating invoice:', error)
+    throw error
+  }
+}
+
 export const saveInvoice = async (invoice: Invoice): Promise<void> => {
   const supabase = createClient()
 
