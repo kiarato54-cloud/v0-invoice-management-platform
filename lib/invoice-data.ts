@@ -30,7 +30,7 @@ export interface Invoice {
   subtotal: number
   tax: number  // This maps to tax_amount in database
   total: number  // This maps to total_amount in database
-  status: "draft" | "sent" | "paid" | "overdue"
+  status: "draft" | "pending" | "paid" | "overdue" | "cancelled"
   createdBy: string
   createdAt: string
   dueDate: string
@@ -105,6 +105,17 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
   } = await supabase.auth.getUser()
   if (!user) throw new Error("User not authenticated")
 
+  // ✅ ADD STATUS VALIDATION HERE (CRITICAL FIX)
+  const validStatuses = ["draft", "pending", "paid", "overdue", "cancelled"] as const
+  let safeStatus: typeof validStatuses[number] = "draft"
+  
+  if (invoice.status && validStatuses.includes(invoice.status as any)) {
+    safeStatus = invoice.status as typeof validStatuses[number]
+  } else {
+    console.warn(`Invalid status "${invoice.status}", defaulting to "draft"`)
+    safeStatus = "draft"
+  }
+
   // ✅ FIX: Include the ID in upsert for updates
   const upsertData: any = {
     invoice_number: invoice.invoiceNumber,
@@ -114,7 +125,7 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
     subtotal: invoice.subtotal,
     tax_amount: invoice.tax,
     total_amount: invoice.total,
-    status: invoice.status,
+    status: safeStatus, // ✅ Use the VALIDATED status, not invoice.status directly
     due_date: invoice.dueDate,
     notes: invoice.notes,
     store_keeper_name: invoice.storeKeeperName,

@@ -205,9 +205,10 @@ const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice["status
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
                   <SelectItem value="overdue">Overdue</SelectItem>
+                  <SelectItem value="cancelled">Cancelled<SelectItem>
                 </SelectContent>
               </Select>
             </div>
