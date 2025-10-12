@@ -74,13 +74,13 @@ export const getInvoices = async (): Promise<Invoice[]> => {
       paymentMethod: inv.customer.payment_method,
     },
     items: inv.items.map((item: any) => ({
-  id: item.id,
-  name: item.description,    // ✅ Use description as name
-  description: item.description,
-  quantity: item.quantity,
-  unitPrice: item.unit_price,
-  total: item.total_price,   // ✅ Use total_price
-})),
+      id: item.id,
+      name: item.description,    // ✅ Use description as name
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unit_price,
+      total: item.total_price,   // ✅ Use total_price
+    })),
     subtotal: inv.subtotal,
     tax: inv.tax_amount,  // ✅ Fixed: use tax_amount from database
     total: inv.total_amount,  // ✅ Fixed: use total_amount from database
@@ -94,32 +94,6 @@ export const getInvoices = async (): Promise<Invoice[]> => {
     driverName: inv.driver_name,
     vehiclePlateNumber: inv.vehicle_plate_number,
   }))
-}
-
-// Add this to your /lib/invoice-data.ts file
-const updateInvoiceStatus = async (invoiceId: string, newStatus: Invoice["status"]) => {
-  try {
-    // Find the invoice to update
-    const invoiceToUpdate = invoices.find(inv => inv.id === invoiceId)
-    if (!invoiceToUpdate) {
-      alert("Invoice not found")
-      return
-    }
-
-    // ✅ NOW THIS WILL WORK: saveInvoice will update because ID is included
-    await saveInvoice({ 
-      ...invoiceToUpdate, 
-      status: newStatus,
-      id: invoiceId // This tells saveInvoice to UPDATE instead of CREATE
-    })
-    
-    // Refetch to get fresh data from server
-    await refetch()
-    
-  } catch (error) {
-    console.error("Error updating invoice status:", error)
-    alert("Failed to update invoice status. Please try again.")
-  }
 }
 
 export const saveInvoice = async (invoice: Invoice): Promise<void> => {
@@ -194,6 +168,7 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
     }
   }
 }
+
 export const getCustomers = async (): Promise<Customer[]> => {
   const supabase = createClient()
 
