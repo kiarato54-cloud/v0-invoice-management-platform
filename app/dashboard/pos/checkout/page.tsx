@@ -6,7 +6,11 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { useState, useMemo } from "react"
+import { usePOSProducts } from "@/lib/hooks/usePOSProducts"
+import { useBranches } from "@/lib/hooks/useBranches"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface CartItem {
   id: string
@@ -17,30 +21,27 @@ interface CartItem {
   totalPrice: number
 }
 
-interface Product {
-  id: string
-  name: string
-  sku: string
-  barcode: string
-  unitPrice: number
-}
-
-// Mock products for checkout
-const mockProducts: Product[] = [
-  { id: "1", name: "Cement 50kg", sku: "CMT-001", barcode: "1234567890001", unitPrice: 12000 },
-  { id: "2", name: "Iron Sheets", sku: "IRS-001", barcode: "1234567890002", unitPrice: 45000 },
-  { id: "3", name: "Wooden Planks", sku: "WDP-001", barcode: "1234567890003", unitPrice: 5000 },
-  { id: "4", name: "Nails 1kg", sku: "NAL-001", barcode: "1234567890004", unitPrice: 2000 },
-  { id: "5", name: "Paint 5L", sku: "PAT-001", barcode: "1234567890005", unitPrice: 35000 },
-]
-
 export default function CheckoutPage() {
   const { user } = useAuth()
+  const { products, loading: productsLoading } = usePOSProducts()
+  const { branches } = useBranches()
+
   const [cart, setCart] = useState<CartItem[]>([])
+  const [search, setSearch] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [barcode, setBarcode] = useState("")
   const [quantity, setQuantity] = useState(1)
   const [discount, setDiscount] = useState(0)
-  const [taxRate, setTaxRate] = useState(0.18) // 18% tax
+  const [taxRate, setTaxRate] = useState(0.18)
+  const [selectedBranch, setSelectedBranch] = useState(branches[0]?.id || "")
+
+  const categories = Array.from(new Set(products.map((p) => p.category)))
+  const filtered = products.filter((p) => {
+    const matchesSearch =
+      p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase())
+    const matchesCategory = !selectedCategory || p.category === selectedCategory
+    return matchesSearch && matchesCategory
+  })
 
   const totals = useMemo(() => {
     const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0)
@@ -60,8 +61,7 @@ export default function CheckoutPage() {
 
   if (!user) return null
 
-  // Add item to cart
-  const addToCart = (product: Product, qty: number) => {
+  const addToCart = (product: any, qty: number) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id)
 
@@ -83,9 +83,9 @@ export default function CheckoutPage() {
           id: product.id,
           name: product.name,
           sku: product.sku,
-          unitPrice: product.unitPrice,
+          unitPrice: product.unit_price,
           quantity: qty,
-          totalPrice: qty * product.unitPrice,
+          totalPrice: qty * product.unit_price,
         },
       ]
     })
@@ -94,21 +94,18 @@ export default function CheckoutPage() {
     setQuantity(1)
   }
 
-  // Handle barcode scan
   const handleBarcodeSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const product = mockProducts.find((p) => p.barcode === barcode)
+    const product = products.find((p) => p.barcode === barcode)
     if (product) {
       addToCart(product, quantity)
     }
   }
 
-  // Remove item from cart
   const removeFromCart = (id: string) => {
     setCart((prevCart) => prevCart.filter((item) => item.id !== id))
   }
 
-  // Update quantity
   const updateQuantity = (id: string, newQty: number) => {
     if (newQty <= 0) {
       removeFromCart(id)
@@ -128,15 +125,53 @@ export default function CheckoutPage() {
     )
   }
 
-  // Complete sale
-  const handleCompleteSale = () => {
+  const handleCompleteSale = async () => {
     if (cart.length === 0) {
       alert("Cart is empty")
       return
     }
-    alert(`Sale completed: Tshs ${totals.total.toLocaleString()}`)
-    setCart([])
-    setDiscount(0)
+
+    try {
+      const response = await fetch("/api/pos/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transaction: {
+            branch_id: selectedBranch,
+            cashier_id: user.id,
+            subtotal: totals.subtotal,
+            tax_amount: totals.taxAmount,
+            tax_rate: taxRate * 100,
+            discount_amount: totals.discountAmount,
+            total_amount: totals.total,
+            payment_method: "cash",
+            status: "completed",
+          },
+          items: cart.map((item) => ({
+            product_id: item.id,
+            quantity: item.quantity,
+            unit_price: item.unitPrice,
+            total_price: item.totalPrice,
+          })),
+          payments: [
+            {
+              method: "cash",
+              amount: totals.total,
+              status: "verified",
+            },
+          ],
+        }),
+      })
+
+      if (response.ok) {
+        alert(`Sale completed: Ksh ${totals.total.toLocaleString()}`)
+        setCart([])
+        setDiscount(0)
+      }
+    } catch (error) {
+      console.error("[v0] Transaction error:", error)
+      alert("Failed to complete transaction")
+    }
   }
 
   return (
@@ -158,10 +193,25 @@ export default function CheckoutPage() {
               <CardContent className="space-y-4">
                 <form onSubmit={handleBarcodeSubmit} className="space-y-4">
                   <div className="space-y-2">
+                    <label className="block text-sm font-medium">Branch</label>
+                    <select
+                      value={selectedBranch}
+                      onChange={(e) => setSelectedBranch(e.target.value)}
+                      className="w-full px-4 py-2 rounded-md bg-input border border-border"
+                    >
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
                     <label className="block text-sm font-medium">Scan Barcode or Manual Entry</label>
                     <input
                       type="text"
-                      placeholder="Enter barcode or product SKU..."
+                      placeholder="Enter barcode..."
                       value={barcode}
                       onChange={(e) => setBarcode(e.target.value)}
                       autoFocus
@@ -188,11 +238,38 @@ export default function CheckoutPage() {
                   </div>
                 </form>
 
-                {/* Quick Product Buttons */}
+                {/* Search and Category Filter */}
                 <div className="space-y-2 pt-4 border-t border-border">
-                  <p className="text-sm font-medium">Quick Add</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {mockProducts.map((product) => (
+                  <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant={!selectedCategory ? "default" : "outline"}
+                      onClick={() => setSelectedCategory(null)}
+                    >
+                      All
+                    </Button>
+                    {categories.map((category) => (
+                      <Button
+                        key={category}
+                        size="sm"
+                        variant={selectedCategory === category ? "default" : "outline"}
+                        onClick={() => setSelectedCategory(category)}
+                      >
+                        {category}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Quick Product Buttons */}
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  {productsLoading ? (
+                    Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16" />)
+                  ) : filtered.length === 0 ? (
+                    <div className="col-span-2 text-center py-4 text-muted-foreground">No products found</div>
+                  ) : (
+                    filtered.map((product) => (
                       <Button
                         key={product.id}
                         variant="outline"
@@ -200,11 +277,11 @@ export default function CheckoutPage() {
                         onClick={() => addToCart(product, 1)}
                         className="h-auto py-2 text-xs text-left flex flex-col items-start"
                       >
-                        <span className="font-semibold">{product.name}</span>
-                        <span className="text-muted-foreground">Tshs {product.unitPrice.toLocaleString()}</span>
+                        <span className="font-semibold line-clamp-1">{product.name}</span>
+                        <span className="text-muted-foreground">Ksh {product.unit_price.toLocaleString()}</span>
                       </Button>
-                    ))}
-                  </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -229,7 +306,7 @@ export default function CheckoutPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                             className="px-2 py-1 rounded-md bg-input hover:bg-secondary"
                           >
                             -
@@ -248,8 +325,8 @@ export default function CheckoutPage() {
                           </button>
                         </div>
                         <div className="text-right ml-4 min-w-32">
-                          <p className="font-bold">Tshs {item.totalPrice.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">@ Tshs {item.unitPrice.toLocaleString()}</p>
+                          <p className="font-bold">Ksh {item.totalPrice.toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">@ Ksh {item.unitPrice.toLocaleString()}</p>
                         </div>
                         <Button
                           variant="ghost"
@@ -275,13 +352,11 @@ export default function CheckoutPage() {
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Subtotal */}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-mono">Tshs {totals.subtotal.toLocaleString()}</span>
+                  <span className="font-mono">Ksh {totals.subtotal.toLocaleString()}</span>
                 </div>
 
-                {/* Discount */}
                 <div className="space-y-2 border-t border-border pt-2">
                   <label className="block text-sm font-medium">Discount %</label>
                   <input
@@ -294,11 +369,10 @@ export default function CheckoutPage() {
                   />
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Discount</span>
-                    <span className="font-mono text-red-500">- Tshs {totals.discountAmount.toLocaleString()}</span>
+                    <span className="font-mono text-red-500">- Ksh {totals.discountAmount.toLocaleString()}</span>
                   </div>
                 </div>
 
-                {/* Tax */}
                 <div className="space-y-2 border-t border-border pt-2">
                   <label className="block text-sm font-medium">Tax Rate</label>
                   <div className="flex gap-2">
@@ -316,18 +390,16 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Tax ({(taxRate * 100).toFixed(0)}%)</span>
-                    <span className="font-mono">+ Tshs {totals.taxAmount.toLocaleString()}</span>
+                    <span className="font-mono">+ Ksh {totals.taxAmount.toLocaleString()}</span>
                   </div>
                 </div>
 
-                {/* Total */}
                 <div className="space-y-4 border-t border-border pt-4 bg-primary/10 -mx-6 -mb-6 p-6 rounded-b-lg">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold">Total</span>
-                    <span className="text-2xl font-bold text-primary">Tshs {totals.total.toLocaleString()}</span>
+                    <span className="text-2xl font-bold text-primary">Ksh {totals.total.toLocaleString()}</span>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="space-y-2 pt-4">
                     <Button onClick={handleCompleteSale} className="w-full" size="lg">
                       Complete Sale
@@ -341,9 +413,6 @@ export default function CheckoutPage() {
                       }}
                     >
                       Clear Cart
-                    </Button>
-                    <Button variant="outline" className="w-full bg-transparent">
-                      Print Receipt
                     </Button>
                   </div>
                 </div>
@@ -359,10 +428,6 @@ export default function CheckoutPage() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Cashier</span>
                   <span className="font-medium">{user.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Branch</span>
-                  <span className="font-medium">Main Branch</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Time</span>
