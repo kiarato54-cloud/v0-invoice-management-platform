@@ -16,7 +16,7 @@ INSERT INTO public.users (id, email, name, role, created_at, is_active) VALUES
 ('472bc9df-6e93-4286-a463-edd24a2f474d', 'admin@pos.local', 'Admin User', 'admin', NOW(), true),
 ('', 'manager@pos.local', 'Store Manager', 'storekeeper', NOW(), true),
 ('c3ce1467-4f2b-45e5-916c-f4c3cd389f3a', 'cashier1@pos.local', 'Cashier One', 'sales_officer', NOW(), true),
-('', 'cashier2@pos.local', 'Cashier Two', 'sales_officer', NOW(), true),
+('fcec573a-2909-4120-ac9c-40c1107774be', 'cashier2@pos.local', 'Cashier Two', 'sales_officer', NOW(), true),
 ('0651cfe0-5b12-4718-ae2d-a58b8c4b4187', 'director@pos.local', 'Managing Director', 'managing_director', NOW(), true)
 ON CONFLICT (id) DO NOTHING;
 
