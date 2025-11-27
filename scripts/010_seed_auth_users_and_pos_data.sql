@@ -13,11 +13,11 @@
 -- ===== INSERT USER PROFILES =====
 INSERT INTO public.users (id, email, name, role, created_at, is_active) VALUES
 -- Replace UUIDs with actual Supabase Auth user IDs after creating users
-('11111111-1111-1111-1111-111111111111', 'admin@pos.local', 'Admin User', 'admin', NOW(), true),
-('22222222-2222-2222-2222-222222222222', 'manager@pos.local', 'Store Manager', 'storekeeper', NOW(), true),
-('33333333-3333-3333-3333-333333333333', 'cashier1@pos.local', 'Cashier One', 'sales_officer', NOW(), true),
-('44444444-4444-4444-4444-444444444444', 'cashier2@pos.local', 'Cashier Two', 'sales_officer', NOW(), true),
-('55555555-5555-5555-5555-555555555555', 'director@pos.local', 'Managing Director', 'managing_director', NOW(), true)
+('472bc9df-6e93-4286-a463-edd24a2f474d', 'admin@pos.local', 'Admin User', 'admin', NOW(), true),
+('', 'manager@pos.local', 'Store Manager', 'storekeeper', NOW(), true),
+('c3ce1467-4f2b-45e5-916c-f4c3cd389f3a', 'cashier1@pos.local', 'Cashier One', 'sales_officer', NOW(), true),
+('', 'cashier2@pos.local', 'Cashier Two', 'sales_officer', NOW(), true),
+('0651cfe0-5b12-4718-ae2d-a58b8c4b4187', 'director@pos.local', 'Managing Director', 'managing_director', NOW(), true)
 ON CONFLICT (id) DO NOTHING;
 
 -- ===== INSERT BRANCHES =====
