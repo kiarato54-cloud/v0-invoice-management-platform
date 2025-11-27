@@ -17,28 +17,34 @@ export interface AuthState {
 export const login = async (email: string, password: string): Promise<User | null> => {
   const supabase = createClient()
 
+  console.log("[v0] Attempting login with email:", email)
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
 
-  if (error || !data.user) {
-    console.error("[v0] Login error:", error?.message || "Unknown error")
+  if (error) {
+    console.error("[v0] Auth error details:", {
+      message: error.message,
+      status: error.status,
+      code: error.code,
+    })
     return null
   }
 
-  // Fetch user profile from users table
-  const { data: userData, error: userError } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", data.user.id)
-    .single()
+  if (!data.user) {
+    console.error("[v0] No user returned from auth signin")
+    return null
+  }
 
-  if (userError || !userData) {
-    console.error("[v0] User data fetch error:", userError?.message || "Unknown error")
-    
+  const { data: userData, error: userError } = await supabase.from("users").select("*").eq("id", data.user.id).single()
+
+  if (userError) {
+    console.log("[v0] User profile not found, attempting to create:", userError.message)
+
     // ✅ Create user profile if it doesn't exist
-    const { data: newUserData } = await supabase
+    const { data: newUserData, error: insertError } = await supabase
       .from("users")
       .insert([
         {
@@ -53,7 +59,13 @@ export const login = async (email: string, password: string): Promise<User | nul
       .select()
       .single()
 
+    if (insertError) {
+      console.error("[v0] Failed to create user profile:", insertError.message)
+      return null
+    }
+
     if (!newUserData) {
+      console.error("[v0] No data returned after creating user profile")
       return null
     }
 
@@ -65,6 +77,11 @@ export const login = async (email: string, password: string): Promise<User | nul
       createdAt: newUserData.created_at,
       isActive: newUserData.is_active,
     }
+  }
+
+  if (!userData) {
+    console.error("[v0] User data is null")
+    return null
   }
 
   const user: User = {
@@ -130,13 +147,9 @@ export const signup = async (
       .single()
 
     // If it's a duplicate key error, just fetch the existing user
-    if (profileError && profileError.code === '23505') {
+    if (profileError && profileError.code === "23505") {
       console.log("[v0] User profile already exists, fetching...")
-      const { data: existingUser } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", data.user.id)
-        .single()
+      const { data: existingUser } = await supabase.from("users").select("*").eq("id", data.user.id).single()
 
       if (existingUser) {
         const user: User = {
@@ -151,7 +164,7 @@ export const signup = async (
       }
     }
 
-    if (profileError && profileError.code !== '23505') {
+    if (profileError && profileError.code !== "23505") {
       console.error("[v0] User profile creation error:", profileError.message)
       return { user: null, error: `Profile creation failed: ${profileError.message}` }
     }
@@ -167,7 +180,6 @@ export const signup = async (
     }
 
     return { user, error: null }
-
   } catch (err) {
     console.error("[v0] Unexpected error during signup:", err)
     return { user: null, error: "Unexpected error during signup" }
