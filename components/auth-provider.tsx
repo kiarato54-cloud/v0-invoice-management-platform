@@ -22,9 +22,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    setUser(currentUser)
-    setIsLoading(false)
+    const loadUser = async () => {
+      const currentUser = await getCurrentUser()
+      setUser(currentUser)
+      setIsLoading(false)
+    }
+
+    loadUser()
   }, [])
 
   if (isLoading) {

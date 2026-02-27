@@ -10,12 +10,15 @@ import { Label } from "@/components/ui/label"
 import { login } from "@/lib/auth"
 import { useAuth } from "./auth-provider"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
+import { SignupForm } from "./signup-form"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showSignup, setShowSignup] = useState(false)
   const { setUser } = useAuth()
   const router = useRouter()
 
@@ -30,31 +33,34 @@ export function LoginForm() {
         setUser(user)
         router.push("/dashboard")
       } else {
-        setError("Invalid credentials. Try password123 for any user.")
+        setError("Invalid credentials. Please check your email and password.")
       }
     } catch (err) {
       setError("Login failed. Please try again.")
+      console.error("[v0] Login error:", err)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (showSignup) {
+    return <SignupForm onBackToLogin={() => setShowSignup(false)} />
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 bg-primary rounded-lg flex items-center justify-center">
-            <svg className="h-6 w-6 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
+          <div className="mx-auto mb-4 h-16 w-16 relative">
+            <Image
+              src="/images/huruma-hardware-logo.jpg"
+              alt="Huruma Hardware Company Logo"
+              fill
+              className="object-contain"
+            />
           </div>
-          <CardTitle className="text-2xl font-semibold">Invoice Management</CardTitle>
-          <CardDescription>Sign in to your account</CardDescription>
+          <CardTitle className="text-2xl font-semibold">Huruma Hardware Company</CardTitle>
+          <CardDescription>Invoice Management System</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,15 +91,10 @@ export function LoginForm() {
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
-          <div className="mt-6 text-sm text-muted-foreground">
-            <p className="font-medium mb-2">Demo Accounts:</p>
-            <div className="space-y-1 text-xs">
-              <p>Admin: admin@hardwarecompany.com</p>
-              <p>Director: director@hardwarecompany.com</p>
-              <p>Sales: sales@hardwarecompany.com</p>
-              <p>Store: store@hardwarecompany.com</p>
-              <p className="mt-2 font-medium">Password: password123</p>
-            </div>
+          <div className="mt-4 text-center">
+            <Button variant="link" onClick={() => setShowSignup(true)} className="text-sm">
+              Don't have an account? Sign up
+            </Button>
           </div>
         </CardContent>
       </Card>
